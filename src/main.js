@@ -11,6 +11,7 @@ const { dayKey, linkReopened, startDay, syncSessions } = require('./todos');
 const { isAtPrompt, promptIsEmpty } = require('./rename');
 const { PRESETS } = require('./colours');
 const { migrate } = require('./migrate');
+const { findTmux } = require('./find-tmux');
 
 const SOCKET = 'panopticode';
 const TMUX_CONF = path.join(__dirname, '..', 'tmux.conf');
@@ -81,8 +82,10 @@ function refreshTodos(sessions) {
   win?.webContents.send('todos', today);
 }
 
+let TMUX = null;
+
 function tmux(...args) {
-  return execFileSync('tmux', ['-u', '-L', SOCKET, '-f', TMUX_CONF, ...args], {
+  return execFileSync(TMUX, ['-u', '-L', SOCKET, '-f', TMUX_CONF, ...args], {
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -324,7 +327,7 @@ async function importSession(pid) {
 function attach(id, cols, rows) {
   if (ptys.has(id)) return;
   const { TMUX, ...env } = process.env;
-  const p = pty.spawn('tmux', ['-u', '-L', SOCKET, 'attach-session', '-t', id], {
+  const p = pty.spawn(TMUX, ['-u', '-L', SOCKET, 'attach-session', '-t', id], {
     name: 'xterm-256color',
     cols,
     rows,
@@ -451,6 +454,15 @@ ipcMain.on('resize', (_, id, cols, rows) => ptys.get(id)?.resize(cols, rows));
 
 app.setName('Panopticode');
 app.whenReady().then(() => {
+  TMUX = findTmux();
+  if (!TMUX) {
+    dialog.showErrorBox(
+      'tmux not found',
+      'Panopticode needs tmux to run your sessions. Install it with:\n\n  brew install tmux\n\nthen open Panopticode again.',
+    );
+    app.quit();
+    return;
+  }
   // One-time carry-over from when the app was called Claude Deck.
   migrate(path.join(os.homedir(), '.claude-deck', 'todos'), TODO_DIR);
   for (const old of ['Claude Deck', 'claude-deck']) {

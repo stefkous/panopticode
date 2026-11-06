@@ -5,7 +5,9 @@ One window for all your Claude Code sessions, with a daily TODO list linked to t
 > An unofficial companion app for [Claude Code](https://claude.com/claude-code). Not affiliated
 > with or endorsed by Anthropic.
 
-![Panopticode: sessions grouped by status, with Today's TODOs](docs/screenshot.png)
+![Panopticode: sessions grouped by status, with Today's TODOs - Light mode](docs/light_mode.png)
+
+![Panopticode: sessions grouped by status, with Today's TODOs - Dark mode](docs/dark_mode.png)
 
 ## Why the name
 

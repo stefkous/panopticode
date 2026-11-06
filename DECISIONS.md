@@ -95,3 +95,15 @@
     could not find `tmux` or `claude`. New sessions are started with that PATH explicitly, so they
     work even if the tmux server was started earlier with a shorter one.
 43. If `claude` is missing, Import shows a clear message instead of failing silently.
+44. Accessibility: session rows, section headers and the sidebar's top TODOs are real buttons,
+    so they work with Tab, Enter and Space. Section headers report whether they are expanded, the
+    selected session is marked as current, and keyboard focus survives the list redrawing.
+    The context-menu key or Shift+F10 opens a session's menu like a right-click.
+45. Every control has an accessible name: TODO checkbox, text, urgency group, linked-session
+    menu, delete button, notes and the rename box.
+46. The page declares `color-scheme: light dark` and a theme colour for each mode, so built-in
+    controls (checkboxes, menus, scrollbars) match the theme.
+47. Buttons have hover styles, and everything shows a visible focus ring when reached by keyboard.
+48. The Import and Colours panels are dialogs: focus moves into them when they open, Escape
+    closes them (except inside a terminal, where Escape belongs to Claude), and focus returns to
+    where it was. Panels and lists contain their own scrolling.

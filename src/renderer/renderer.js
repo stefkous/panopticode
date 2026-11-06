@@ -53,6 +53,7 @@ function renderList() {
     document.getElementById('term-name').textContent = selected.name;
     document.getElementById('term-cwd').textContent = shortenPath(selected.cwd);
   }
+  const focusKey = listEl.contains(document.activeElement) ? document.activeElement.dataset.focusKey : null;
   listEl.replaceChildren(
     ...groupByStatus(sessions).flatMap((section) => {
       const folded = collapsed.has(section.state);
@@ -62,6 +63,7 @@ function renderList() {
       ];
     }),
   );
+  if (focusKey) listEl.querySelector(`[data-focus-key="${CSS.escape(focusKey)}"]`)?.focus();
   emptyEl.hidden = sessions.length > 0 || view === 'todos';
 }
 
@@ -90,32 +92,47 @@ function toggleSection(state) {
 
 function sectionHeader(section, folded) {
   const li = document.createElement('li');
-  li.className = `section-header ${section.state}`;
-  li.innerHTML = '<span class="caret"></span><span class="label"></span><span class="count"></span>';
-  li.querySelector('.caret').textContent = folded ? '▸' : '▾';
-  li.querySelector('.label').textContent = section.label;
-  li.querySelector('.count').textContent = String(section.sessions.length);
-  li.addEventListener('click', () => toggleSection(section.state));
+  const button = document.createElement('button');
+  button.className = `section-header ${section.state}`;
+  button.dataset.focusKey = `section:${section.state}`;
+  button.setAttribute('aria-expanded', String(!folded));
+  button.innerHTML =
+    '<span class="caret" aria-hidden="true"></span><span class="label"></span><span class="count"></span>';
+  button.querySelector('.caret').textContent = folded ? '▸' : '▾';
+  button.querySelector('.label').textContent = section.label;
+  button.querySelector('.count').textContent = String(section.sessions.length);
+  button.addEventListener('click', () => toggleSection(section.state));
+  li.append(button);
   return li;
 }
 
 function sessionRow(s, index, selected) {
   const li = document.createElement('li');
-  li.className = `session ${s.state}${selected?.id === s.id ? ' selected' : ''}`;
-  li.title = s.cwd;
-  li.innerHTML = `
-    <span class="dot"></span>
+  const isRenaming = renaming?.id === s.id;
+  // A button can't hold the rename text box, so the row is a plain box while renaming.
+  const row = document.createElement(isRenaming ? 'div' : 'button');
+  row.className = `session ${s.state}${selected?.id === s.id ? ' selected' : ''}`;
+  row.title = s.cwd;
+  row.dataset.focusKey = `session:${s.id}`;
+  if (selected?.id === s.id) row.setAttribute('aria-current', 'true');
+  row.innerHTML = `
+    <span class="dot" aria-hidden="true"></span>
     <span class="name"></span>
     <span class="shortcut">${index < 9 ? `⌘${index + 1}` : ''}</span>
     <span class="cwd"></span>`;
-  li.querySelector('.name').textContent = s.name;
-  if (renaming?.id === s.id) li.querySelector('.name').replaceWith(renameInput(s));
-  li.querySelector('.cwd').textContent = shortenPath(s.cwd);
-  li.addEventListener('click', () => renaming?.id !== s.id && select(s.id));
-  li.addEventListener('contextmenu', (e) => {
+  row.querySelector('.name').textContent = s.name;
+  if (isRenaming) row.querySelector('.name').replaceWith(renameInput(s));
+  row.querySelector('.cwd').textContent = shortenPath(s.cwd);
+  if (!isRenaming) {
+    row.setAttribute('aria-label', `${s.name}, ${STATE_LABELS[s.state] ?? s.state}, ${shortenPath(s.cwd)}`);
+    row.addEventListener('click', () => select(s.id));
+  }
+  // Right-click, or the context-menu key / Shift+F10 when the row has keyboard focus.
+  row.addEventListener('contextmenu', (e) => {
     e.preventDefault();
     window.deck.showSessionMenu(s.id);
   });
+  li.append(row);
   return li;
 }
 
@@ -126,6 +143,7 @@ function renameInput(session) {
     value: session.name,
     placeholder: 'Leave empty to use Claude’s title',
   });
+  input.setAttribute('aria-label', 'Session name');
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') window.deck.rename(session.id, input.value);
     if (e.key === 'Enter' || e.key === 'Escape') {
@@ -222,11 +240,26 @@ darkQuery.addEventListener('change', () => {
 });
 
 const EXTERNAL_STATUS = { busy: 'Working', waiting: 'Waiting for you', idle: 'Idle' };
+// Overlay panels: move focus in when one opens, and back to where it was when it closes.
+let panelReturnFocus = null;
+
+function openPanel(panel) {
+  if (panel.hidden) panelReturnFocus = document.activeElement;
+  panel.hidden = false;
+  panel.focus();
+}
+
+function closePanel(panel) {
+  panel.hidden = true;
+  panelReturnFocus?.focus?.();
+  panelReturnFocus = null;
+}
+
 const importPanel = document.getElementById('import-panel');
 const externalList = document.getElementById('external-list');
 
 async function showImport() {
-  importPanel.hidden = false;
+  openPanel(importPanel);
   externalList.replaceChildren(Object.assign(document.createElement('li'), { textContent: 'Loading…' }));
   const external = await window.deck.listExternal();
   if (!external.length) {
@@ -259,9 +292,7 @@ async function showImport() {
 }
 
 document.getElementById('import').addEventListener('click', showImport);
-document.getElementById('import-close').addEventListener('click', () => {
-  importPanel.hidden = true;
-});
+document.getElementById('import-close').addEventListener('click', () => closePanel(importPanel));
 window.deck.onRequestImport(showImport);
 
 // Today's TODOs
@@ -296,21 +327,34 @@ function urgencyClass(urgency) {
 
 function renderTopTodos() {
   if (!day) return;
-  document.getElementById('top-todos').replaceChildren(
+  const topList = document.getElementById('top-todos');
+  const focusKey = topList.contains(document.activeElement) ? document.activeElement.dataset.focusKey : null;
+  topList.replaceChildren(
     ...topTodos(day.items, 5).map((item) => {
       const li = document.createElement('li');
+      const button = document.createElement('button');
       const session = sessions.find((s) => s.id === item.sessionId);
-      li.className = `top-todo ${session?.state ?? ''}`;
-      li.innerHTML = '<span class="badge"></span><span class="top-text"></span><span class="dot"></span>';
-      const badge = li.querySelector('.badge');
+      button.className = `top-todo ${session?.state ?? ''}`;
+      button.dataset.focusKey = `top:${item.id}`;
+      button.innerHTML =
+        '<span class="badge" aria-hidden="true"></span><span class="top-text"></span><span class="dot" aria-hidden="true"></span>';
+      const badge = button.querySelector('.badge');
       badge.textContent = item.urgency ?? '';
       badge.className = item.urgency ? urgencyClass(item.urgency) : 'badge';
-      li.querySelector('.top-text').textContent = item.text;
-      li.title = session ? `${item.text} — open ${session.name}` : item.text;
-      li.addEventListener('click', () => (session ? select(session.id) : showTodos()));
+      button.querySelector('.top-text').textContent = item.text;
+      button.title = session ? `${item.text} — open ${session.name}` : item.text;
+      button.setAttribute(
+        'aria-label',
+        [item.text, item.urgency && `urgency ${item.urgency}`, session ? `opens ${session.name}` : 'opens Today’s TODOs']
+          .filter(Boolean)
+          .join(', '),
+      );
+      button.addEventListener('click', () => (session ? select(session.id) : showTodos()));
+      li.append(button);
       return li;
     }),
   );
+  if (focusKey) topList.querySelector(`[data-focus-key="${CSS.escape(focusKey)}"]`)?.focus();
 }
 
 /** Five dots: click one to set urgency 1–5, click the current level again to clear it. */
@@ -318,6 +362,8 @@ function urgencyPicker(item) {
   const picker = document.createElement('div');
   picker.className = `urgency-dots ${item.urgency ? urgencyClass(item.urgency).split(' ')[1] : ''}`;
   picker.title = 'Urgency (5 = most urgent). Click the current level again to clear.';
+  picker.setAttribute('role', 'group');
+  picker.setAttribute('aria-label', 'Urgency');
   for (let level = 1; level <= 5; level++) {
     const dot = document.createElement('button');
     dot.setAttribute('aria-label', `Urgency ${level}`);
@@ -361,6 +407,7 @@ function sessionPicker(item) {
   for (const [value, label] of options) picker.append(new Option(label, value));
   picker.value = item.sessionId ?? '';
   picker.title = 'Link to a session';
+  picker.setAttribute('aria-label', 'Linked session');
   picker.addEventListener('change', () => {
     item.sessionId = picker.value || null;
     saveNow();
@@ -393,6 +440,7 @@ function todoRow(item) {
   li.className = `todo${item.done ? ' done' : ''}`;
 
   const tick = Object.assign(document.createElement('input'), { type: 'checkbox', checked: item.done });
+  tick.setAttribute('aria-label', `Done: ${item.text.trim() || 'untitled TODO'}`);
   tick.addEventListener('change', async () => {
     item.done = tick.checked;
     saveNow();
@@ -413,6 +461,7 @@ function todoRow(item) {
     placeholder: item.sessionId ? 'What’s the goal for this session?' : 'Something to do',
   });
   text.dataset.focusKey = item.id;
+  text.setAttribute('aria-label', 'TODO');
   text.addEventListener('input', () => {
     item.text = text.value;
     updateCount();
@@ -424,6 +473,7 @@ function todoRow(item) {
     textContent: '×',
     title: 'Delete',
   });
+  remove.setAttribute('aria-label', `Delete ${item.text.trim() || 'untitled TODO'}`);
   remove.addEventListener('click', () => {
     day.items = day.items.filter((i) => i !== item);
     saveNow();
@@ -545,10 +595,15 @@ for (const picker of [todoColourPicker, sessionColourPicker]) {
   picker.addEventListener('change', () => chooseColours({ todo: todoColourPicker.value, session: sessionColourPicker.value }));
 }
 
-window.deck.onRequestColours(() => {
-  coloursPanel.hidden = false;
-});
-document.getElementById('colours-close').addEventListener('click', () => {
-  coloursPanel.hidden = true;
+window.deck.onRequestColours(() => openPanel(coloursPanel));
+document.getElementById('colours-close').addEventListener('click', () => closePanel(coloursPanel));
+
+// Escape closes an open panel (not while typing in a terminal, where Escape belongs to Claude).
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape' || document.activeElement?.closest('.term')) return;
+  const open = [coloursPanel, importPanel].find((panel) => !panel.hidden);
+  if (!open) return;
+  e.preventDefault();
+  closePanel(open);
 });
 window.deck.getColours().then(applyColours);

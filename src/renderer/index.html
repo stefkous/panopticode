@@ -2,6 +2,9 @@
 <html lang="en-GB">
   <head>
     <meta charset="utf-8" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f0efec" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#232328" media="(prefers-color-scheme: dark)" />
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'"
@@ -28,7 +31,7 @@
             <button id="new-session" class="primary" title="New session (⌘N)">New</button>
           </div>
         </header>
-        <ul id="session-list"></ul>
+        <ul id="session-list" aria-label="Sessions"></ul>
       </section>
       <footer id="appearance" aria-label="Appearance">
         <button data-theme="system">System</button>
@@ -51,12 +54,12 @@
           <h3>Done</h3>
           <ul id="done-list"></ul>
         </section>
-        <h3>Notes</h3>
-        <textarea id="todo-notes" placeholder="Anything else for today"></textarea>
+        <h3 id="notes-heading">Notes</h3>
+        <textarea id="todo-notes" aria-labelledby="notes-heading" placeholder="Anything else for today"></textarea>
       </section>
-      <section id="colours-panel" hidden>
+      <section id="colours-panel" role="dialog" aria-labelledby="colours-heading" tabindex="-1" hidden>
         <header>
-          <h2>Colours</h2>
+          <h2 id="colours-heading">Colours</h2>
           <button id="colours-close">Close</button>
         </header>
         <h3>Presets</h3>
@@ -68,9 +71,9 @@
         </div>
         <p class="hint">Lighter and darker shades are worked out from these for light and dark mode.</p>
       </section>
-      <section id="import-panel" hidden>
+      <section id="import-panel" role="dialog" aria-labelledby="import-heading" tabindex="-1" hidden>
         <header>
-          <h2>Import a running session</h2>
+          <h2 id="import-heading">Import a running session</h2>
           <button id="import-close">Close</button>
         </header>
         <p class="hint">

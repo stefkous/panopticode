@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light dark;
   /* Block colours derive from two base colours set from the Colours panel. */
   --todo-base: #534ab7;
   --session-base: #0f6e56;
@@ -664,3 +665,60 @@ button.primary {
 .urgency-dots.low button.on { background: var(--idle); border-color: var(--idle); }
 .urgency-dots.medium button.on { background: var(--waiting); border-color: var(--waiting); }
 .urgency-dots.high button.on { background: var(--errored); border-color: var(--errored); }
+
+/* Rows that are buttons (sessions, section headers, top TODOs): look like rows, not buttons. */
+.session,
+.section-header,
+.top-todo {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  background: transparent;
+  border-width: 0;
+}
+
+.session {
+  border-left: 3px solid transparent;
+}
+
+.session.waiting {
+  border-left-color: var(--waiting);
+}
+
+/* Hover and keyboard focus. */
+button:hover {
+  background: var(--selected);
+}
+
+button.primary:hover {
+  background: color-mix(in srgb, var(--session-accent) 85%, #000);
+}
+
+#appearance button:hover {
+  color: var(--text);
+}
+
+.delete:hover {
+  color: var(--errored);
+}
+
+:focus-visible {
+  outline: 2px solid var(--working);
+  outline-offset: 2px;
+}
+
+.session:focus-visible,
+.section-header:focus-visible,
+.top-todo:focus-visible,
+.tab:focus-visible,
+[role='dialog']:focus-visible {
+  outline-offset: -2px;
+}
+
+/* Scrolling inside a panel or list shouldn't bounce the window behind it. */
+#import-panel,
+#colours-panel,
+#todos-view,
+#session-list {
+  overscroll-behavior: contain;
+}

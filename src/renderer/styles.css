@@ -82,8 +82,6 @@ h1 {
   font-size: 13px;
   font-weight: 600;
   color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 button {
@@ -326,7 +324,7 @@ h3 {
 
 .todo {
   display: grid;
-  grid-template-columns: auto 52px minmax(200px, 1fr) 180px minmax(0, 260px) auto;
+  grid-template-columns: auto 70px minmax(200px, 1fr) 180px minmax(0, 260px) auto;
   gap: 10px;
   align-items: center;
   padding: 6px 0;
@@ -470,7 +468,8 @@ select {
   letter-spacing: 0;
 }
 
-/* Two coloured blocks: TODOs (pink) and sessions (green). */
+/* Two blocks: TODOs and sessions. Neutral backgrounds, so status colours carry the meaning;
+   the block colour is kept for headings, counts and accents. */
 .block {
   margin: 8px 8px 0;
   border: 1px solid;
@@ -478,8 +477,7 @@ select {
 }
 
 .todo-block {
-  background: var(--todo-bg);
-  border-color: var(--todo-border);
+  border-color: var(--border);
   padding-bottom: 4px;
 }
 
@@ -488,8 +486,7 @@ select {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  background: var(--session-bg);
-  border-color: var(--session-border);
+  border-color: var(--border);
 }
 
 .todo-block .tab {
@@ -501,7 +498,7 @@ select {
 .todo-block .tab.selected,
 .todo-block .top-todo:hover,
 .todo-block .tab:hover {
-  background: color-mix(in srgb, var(--todo-border) 35%, transparent);
+  background: var(--selected);
 }
 
 .todo-block .count {
@@ -522,23 +519,9 @@ select {
   text-transform: none;
 }
 
-.session-block .section-header {
-  color: var(--session-text);
-}
-
 .session-block .section-header:hover,
 .session-block .session.selected {
-  background: color-mix(in srgb, var(--session-border) 35%, transparent);
-}
-
-.session-block .section-header .count {
-  background: color-mix(in srgb, var(--session-border) 50%, transparent);
-  color: var(--session-text);
-}
-
-.session-block .cwd,
-.session-block .shortcut {
-  color: color-mix(in srgb, var(--session-text) 75%, transparent);
+  background: var(--selected);
 }
 
 .session-block .session.waiting {
@@ -548,12 +531,7 @@ select {
 #todos-view header {
   margin: -20px -24px 16px;
   padding: 16px 24px;
-  background: var(--todo-bg);
-  border-bottom: 1px solid var(--todo-border);
-  color: var(--todo-text);
-}
-
-#todos-view header .hint {
+  border-bottom: 2px solid var(--todo-accent);
   color: var(--todo-text);
 }
 
@@ -567,10 +545,11 @@ select {
   align-items: center;
   gap: 8px;
   padding: 0 12px;
-  border: 1px solid var(--session-border);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--session-accent);
   border-radius: 8px;
-  background: var(--session-bg);
-  color: var(--session-text);
+  background: var(--sidebar);
+  color: var(--text);
 }
 
 #term-bar[hidden] {
@@ -582,16 +561,12 @@ select {
 }
 
 #term-cwd {
-  color: color-mix(in srgb, var(--session-text) 75%, transparent);
+  color: var(--muted);
   font-size: 12px;
 }
 
 .term {
   top: 46px;
-}
-
-#colours-open {
-  margin: 6px 8px 8px;
 }
 
 #colours-panel {
@@ -658,3 +633,34 @@ input[type='color'] {
 #done-section .todo {
   opacity: 0.85;
 }
+
+/* "New" is the main action. */
+button.primary {
+  background: var(--session-accent);
+  border-color: var(--session-accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Urgency: five dots, filled up to the level, coloured by how urgent it is. */
+.urgency-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.urgency-dots button {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: transparent;
+}
+
+.urgency-dots button:hover {
+  border-color: var(--muted);
+}
+
+.urgency-dots.low button.on { background: var(--idle); border-color: var(--idle); }
+.urgency-dots.medium button.on { background: var(--waiting); border-color: var(--waiting); }
+.urgency-dots.high button.on { background: var(--errored); border-color: var(--errored); }

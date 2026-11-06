@@ -313,19 +313,23 @@ function renderTopTodos() {
   );
 }
 
+/** Five dots: click one to set urgency 1–5, click the current level again to clear it. */
 function urgencyPicker(item) {
-  const picker = document.createElement('select');
-  picker.className = 'urgency-picker';
-  picker.title = 'Urgency (5 = most urgent)';
-  for (const [value, label] of [['', '–'], ...[5, 4, 3, 2, 1].map((n) => [String(n), String(n)])]) {
-    picker.append(new Option(label, value));
+  const picker = document.createElement('div');
+  picker.className = `urgency-dots ${item.urgency ? urgencyClass(item.urgency).split(' ')[1] : ''}`;
+  picker.title = 'Urgency (5 = most urgent). Click the current level again to clear.';
+  for (let level = 1; level <= 5; level++) {
+    const dot = document.createElement('button');
+    dot.setAttribute('aria-label', `Urgency ${level}`);
+    dot.setAttribute('aria-pressed', String(item.urgency === level));
+    if (item.urgency >= level) dot.classList.add('on');
+    dot.addEventListener('click', () => {
+      item.urgency = item.urgency === level ? null : level;
+      saveNow();
+      renderTodos();
+    });
+    picker.append(dot);
   }
-  picker.value = item.urgency ? String(item.urgency) : '';
-  picker.addEventListener('change', () => {
-    item.urgency = picker.value ? Number(picker.value) : null;
-    saveNow();
-    renderTodos();
-  });
   return picker;
 }
 
@@ -541,7 +545,7 @@ for (const picker of [todoColourPicker, sessionColourPicker]) {
   picker.addEventListener('change', () => chooseColours({ todo: todoColourPicker.value, session: sessionColourPicker.value }));
 }
 
-document.getElementById('colours-open').addEventListener('click', () => {
+window.deck.onRequestColours(() => {
   coloursPanel.hidden = false;
 });
 document.getElementById('colours-close').addEventListener('click', () => {

@@ -80,3 +80,18 @@
     appearance and colour preferences from the old app folder, once, and only when nothing exists
     at the new location. The old files are left in place.
 36. `remove-hooks` also removes hooks installed under the old name.
+37. The Colours button leaves the sidebar; the Colours panel opens from View → Colours…
+    The light/dark switch stays in the sidebar, since it is used often.
+38. "New" is the primary button (filled with the session colour); "Import" stays secondary.
+39. The sidebar blocks have neutral backgrounds and borders. Block colours remain on headings,
+    counts, the TODOs page underline and the terminal title bar's left edge, so status colours
+    (waiting, error, working) are the strongest colours on screen. Supersedes the tinted blocks
+    in 28.
+40. Urgency is set with five dots instead of a dropdown: click a dot to set the level, click the
+    current level again to clear it. Filled dots take the low/medium/high colour.
+41. The Sessions heading uses sentence case like "Today's TODOs", so the two blocks match.
+42. On launch the app takes its PATH from the user's login shell (with Homebrew and
+    `~/.local/bin` as fallbacks), because apps opened outside a terminal get a minimal PATH and
+    could not find `tmux` or `claude`. New sessions are started with that PATH explicitly, so they
+    work even if the tmux server was started earlier with a shorter one.
+43. If `claude` is missing, Import shows a clear message instead of failing silently.

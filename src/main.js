@@ -12,6 +12,10 @@ const { isAtPrompt, promptIsEmpty } = require('./rename');
 const { PRESETS } = require('./colours');
 const { migrate } = require('./migrate');
 const { findTmux } = require('./find-tmux');
+const { userPath } = require('./shell-path');
+
+// Use the same PATH as the user's terminal, so tmux and claude are found however the app is opened.
+process.env.PATH = userPath((file, args) => execFileSync(file, args, { encoding: 'utf8', timeout: 3000, stdio: ['ignore', 'pipe', 'ignore'] }));
 
 const SOCKET = 'panopticode';
 const TMUX_CONF = path.join(__dirname, '..', 'tmux.conf');
@@ -82,10 +86,12 @@ function refreshTodos(sessions) {
   win?.webContents.send('todos', today);
 }
 
-let TMUX = null;
+// Full path to the tmux binary, found at launch. Not called TMUX: that is tmux's own
+// environment variable, which attach() strips from the environment by that name.
+let TMUX_BIN = null;
 
 function tmux(...args) {
-  return execFileSync(TMUX, ['-u', '-L', SOCKET, '-f', TMUX_CONF, ...args], {
+  return execFileSync(TMUX_BIN, ['-u', '-L', SOCKET, '-f', TMUX_CONF, ...args], {
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -244,7 +250,7 @@ async function newSession() {
 }
 
 function startSession(cwd, name, command, id = newSessionId()) {
-  tmux('new-session', '-d', '-s', id, '-c', cwd, '-e', `PANOPTICODE_ID=${id}`, ...command);
+  tmux('new-session', '-d', '-s', id, '-c', cwd, '-e', `PANOPTICODE_ID=${id}`, '-e', `PATH=${process.env.PATH}`, ...command);
   tmux('set-option', '-t', id, '@deck_name', name);
   pushSessions();
   return id;
@@ -327,7 +333,7 @@ async function importSession(pid) {
 function attach(id, cols, rows) {
   if (ptys.has(id)) return;
   const { TMUX, ...env } = process.env;
-  const p = pty.spawn(TMUX, ['-u', '-L', SOCKET, 'attach-session', '-t', id], {
+  const p = pty.spawn(TMUX_BIN, ['-u', '-L', SOCKET, 'attach-session', '-t', id], {
     name: 'xterm-256color',
     cols,
     rows,
@@ -386,6 +392,7 @@ function buildMenu() {
               click: () => setAppearance(theme),
             })),
           },
+          { label: 'Colours…', click: () => win?.webContents.send('request-colours') },
           { type: 'separator' },
           { role: 'reload' },
           { role: 'toggleDevTools' },
@@ -446,7 +453,18 @@ ipcMain.on('todos-save', (_, day) => {
   today = day;
   saveToday();
 });
-ipcMain.handle('list-external', listExternal);
+ipcMain.handle('list-external', () => {
+  try {
+    return listExternal();
+  } catch (e) {
+    if (e.code !== 'ENOENT') throw e;
+    dialog.showErrorBox(
+      'Claude Code not found',
+      'Panopticode could not find the claude command. Check that Claude Code is installed and that `claude` works in your terminal.',
+    );
+    return [];
+  }
+});
 ipcMain.handle('import-session', (_, pid) => importSession(pid));
 ipcMain.on('attach', (_, id, cols, rows) => attach(id, cols, rows));
 ipcMain.on('input', (_, id, data) => ptys.get(id)?.write(data));
@@ -454,8 +472,8 @@ ipcMain.on('resize', (_, id, cols, rows) => ptys.get(id)?.resize(cols, rows));
 
 app.setName('Panopticode');
 app.whenReady().then(() => {
-  TMUX = findTmux();
-  if (!TMUX) {
+  TMUX_BIN = findTmux();
+  if (!TMUX_BIN) {
     dialog.showErrorBox(
       'tmux not found',
       'Panopticode needs tmux to run your sessions. Install it with:\n\n  brew install tmux\n\nthen open Panopticode again.',

@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('deck', {
   listExternal: () => ipcRenderer.invoke('list-external'),
   importSession: (pid) => ipcRenderer.invoke('import-session', pid),
   onRequestImport: (fn) => ipcRenderer.on('request-import', fn),
+  onRequestColours: (fn) => ipcRenderer.on('request-colours', fn),
   getAppearance: () => ipcRenderer.invoke('get-appearance'),
   setAppearance: (theme) => ipcRenderer.send('set-appearance', theme),
   onAppearance: (fn) => ipcRenderer.on('appearance', (_, theme) => fn(theme)),

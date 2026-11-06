@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'"
+    />
+    <title>Panopticode</title>
+    <link rel="stylesheet" href="../../node_modules/@fontsource/dm-sans/400.css" />
+    <link rel="stylesheet" href="../../node_modules/@fontsource/dm-sans/600.css" />
+    <link rel="stylesheet" href="../../node_modules/@xterm/xterm/css/xterm.css" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <aside id="sidebar">
+      <section class="block todo-block">
+        <button id="todos-tab" class="tab">
+          <span>Today’s TODOs</span><span id="todos-count" class="count"></span>
+        </button>
+        <ul id="top-todos" aria-label="Most urgent TODOs"></ul>
+      </section>
+      <section class="block session-block">
+        <header>
+          <h1>Sessions <span id="sessions-count" class="count"></span></h1>
+          <div class="actions">
+            <button id="import" title="Import a running session (⌘I)">Import</button>
+            <button id="new-session" title="New session (⌘N)">New</button>
+          </div>
+        </header>
+        <ul id="session-list"></ul>
+      </section>
+      <footer id="appearance" aria-label="Appearance">
+        <button data-theme="system">System</button>
+        <button data-theme="light">Light</button>
+        <button data-theme="dark">Dark</button>
+      </footer>
+      <button id="colours-open">Colours</button>
+    </aside>
+    <main id="terminals">
+      <div id="term-bar" hidden>
+        <span class="dot"></span><span id="term-name"></span><span id="term-cwd"></span>
+      </div>
+      <section id="todos-view" hidden>
+        <header>
+          <h2>Today’s TODOs</h2>
+          <span id="todos-date" class="hint"></span>
+        </header>
+        <ul id="todo-list"></ul>
+        <button id="todo-add">+ Add a TODO</button>
+        <section id="done-section" hidden>
+          <h3>Done</h3>
+          <ul id="done-list"></ul>
+        </section>
+        <h3>Notes</h3>
+        <textarea id="todo-notes" placeholder="Anything else for today"></textarea>
+      </section>
+      <section id="colours-panel" hidden>
+        <header>
+          <h2>Colours</h2>
+          <button id="colours-close">Close</button>
+        </header>
+        <h3>Presets</h3>
+        <div id="presets" class="presets"></div>
+        <h3>Your colours</h3>
+        <div class="pickers">
+          <label><input type="color" id="todo-colour" /> Today’s TODOs</label>
+          <label><input type="color" id="session-colour" /> Sessions</label>
+        </div>
+        <p class="hint">Lighter and darker shades are worked out from these for light and dark mode.</p>
+      </section>
+      <section id="import-panel" hidden>
+        <header>
+          <h2>Import a running session</h2>
+          <button id="import-close">Close</button>
+        </header>
+        <p class="hint">
+          Sessions running outside this app. Importing closes the original and reopens the
+          conversation here with its full history.
+        </p>
+        <ul id="external-list"></ul>
+      </section>
+      <p id="empty">No sessions yet. Start one with <strong>New</strong> (⌘N) or <strong>Import</strong> a running one (⌘I).</p>
+    </main>
+    <script src="../../node_modules/@xterm/xterm/lib/xterm.js"></script>
+    <script src="../../node_modules/@xterm/addon-fit/lib/addon-fit.js"></script>
+    <script src="../todos.js"></script>
+    <script src="../sections.js"></script>
+    <script src="../colours.js"></script>
+    <script src="renderer.js"></script>
+  </body>
+</html>

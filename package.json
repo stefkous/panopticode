@@ -1,0 +1,25 @@
+{
+  "name": "panopticode",
+  "version": "1.0.0",
+  "description": "One window for all your Claude Code sessions, with a daily TODO list linked to them",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test 'test/*.test.js'",
+    "install-hooks": "node scripts/install-hooks.js",
+    "remove-hooks": "node scripts/install-hooks.js --remove",
+    "postinstall": "chmod +x node_modules/node-pty/prebuilds/darwin-*/spawn-helper"
+  },
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@fontsource/dm-sans": "^5.3.0",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
+    "electron": "^44.7.2",
+    "node-pty": "^1.1.0"
+  },
+  "allowScripts": {
+    "node-pty@1.1.0": true
+  }
+}

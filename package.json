@@ -1,6 +1,6 @@
 {
   "name": "panopticode",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "One window for all your Claude Code sessions, with a daily TODO list linked to them",
   "main": "src/main.js",
   "scripts": {

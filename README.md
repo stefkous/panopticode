@@ -44,6 +44,19 @@ work and the reason for it stay together.
 - Logic (status mapping, TODO carry-over and ranking, tmux parsing, import detection) lives in
   small pure modules with unit tests; `main.js` wires them to Electron.
 
+## Design decisions
+
+- **Sessions outlive the window.** Each one runs in tmux, so closing or restarting the app
+  never stops Claude.
+- **Import by resuming, not attaching.** Two live Claude processes would share one transcript,
+  so importing closes the original and reopens the same conversation with `claude --resume`.
+- **Sorted by what needs you.** Sessions are grouped by status, but ⌘1–9 stay tied to session
+  age, so shortcuts don't jump when a session changes group.
+- **One TODO list per day.** Unfinished items carry over; ticking a TODO can close its session,
+  and reopening it later resumes the same conversation.
+- **Keyboard first.** Every control works with Tab, Enter and Space, has an accessible name and
+  shows a visible focus ring.
+
 [`DECISIONS.md`](DECISIONS.md) records every design decision, including what was tried and
 rejected.
 
